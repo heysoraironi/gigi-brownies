@@ -101,6 +101,7 @@ h1 b{font-weight:400;color:var(--pink)}
 .luc.finding img{cursor:pointer;filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px var(--gold))}
 .luc .ask{position:absolute;left:0;transform:translateX(-50%);display:flex;align-items:center;gap:2px;background:#fff;border:2px solid var(--cocoa);border-radius:14px;padding:2px 7px 2px 4px;pointer-events:none;animation:ask .7s ease-in-out infinite alternate;box-shadow:0 3px 0 var(--fudge)}
 .luc .ask img{width:26px;height:26px;position:static;transform:none;filter:none}
+.luc .ask .scroll{font-size:22px;line-height:26px}
 .luc .ask b{font-family:var(--display);color:var(--pink);font-size:20px;font-weight:400}
 .luc .ask::after{content:"";position:absolute;left:50%;bottom:-7px;width:10px;height:10px;background:#fff;border-right:2px solid var(--cocoa);border-bottom:2px solid var(--cocoa);transform:translateX(-50%) rotate(45deg)}
 @keyframes ask{to{transform:translateX(-50%) translateY(-6px) scale(1.08)}}
@@ -351,7 +352,7 @@ const UPG=[
  {id:"k4",fac:3,req:"f4",name:"Qurios Academy",buffs:"f4",desc:"700 / sec · +15% Esme each",base:500000,rate:700},
  {id:"f5",req:"k4",img:"icon",name:"Pierce",desc:"Bakes 1,400 / sec · summons brownies · auto-clicks",base:1400000,rate:1400,boostBy:"k5"},
  {id:"k5",fac:4,req:"f5",name:"Beatrice Brownie Lab",buffs:"f5",desc:"5,000 / sec · +15% Pierce each",base:5500000,rate:5000},
- {id:"bea",img:"icon",name:"Beatrice",ng:1,base:2e30,growth:1.15,rate:25000,desc:"You've baked enough brownies to consume the sun, that's enough to summon Beatrice, I suppose. Summoning her starts a New Game+.",lockText:"🔒 Max out every factory (100 of each) to summon her"},
+ {id:"bea",img:"icon",name:"Beatrice",ng:1,base:1e15,growth:10,rate:25000,desc:"You've baked enough brownies to consume the sun, that's enough to summon Beatrice, I suppose. Summoning her starts a New Game+. Pierce's finds lower her price.",lockText:"🔒 Max out every factory (100 of each) to summon her"},
 ];
 const GOALS=[[100,"First tray!"],[1000,"Birthday party hats"],[10000,"Brownie feast"],[100000,"Brownie mountain"],[1000000,"Master Baker Status"],[1e7,"Legendary Gigi"]];
 const QUIPS=["\"Yay! More brownies!\"","\"The secret is... twice as much chocolate!\"","\"No mo' muffin... I mean brownie point.\"","\"Is it gooey? It better be gooey.\"","\"I licked the whisk. It's MY whisk.\"","\"Happy birthday to me!\"","\"Who took the corner piece?! ...oh. Me.\"","\"For me?! Unbelievable!\""];
@@ -381,7 +382,9 @@ function fmt(n){if(!isFinite(n))return"∞";if(n<1000)return(Math.floor(n*10)/10
  return n.toExponential(2).replace("e+","e")}
 function fmtWord(n){if(n<1000)return fmt(n);const e=Math.floor(Math.log10(n)/3);if(e<SUFNAME.length){const v=n/Math.pow(1000,e);return(v<10?v.toFixed(1):Math.floor(v))+" "+SUFNAME[e]}return fmt(n)}
 const own=id=>S.own[id]||0;
-const cost=u=>Math.ceil(u.base*Math.pow(u.growth||1.15,own(u.id)));
+// Pierce is Beatrice's best friend: each Pierce find you collect cuts her price by 8%, down to 5% of full price
+const BD_STEP=.92,BD_FLOOR=.05,beaDisc=()=>Math.max(BD_FLOOR,S.bd||1);
+const cost=u=>Math.ceil(u.base*Math.pow(u.growth||1.15,own(u.id))*(u.ng?beaDisc():1));
 const bonusMult=()=>Math.pow(2,own("choc"));
 let stormEnd=0;const storming=()=>Date.now()<stormEnd;const boostX=()=>(buff?7:1)*(storming()?100:1);
 // Lucianna and Michael boost click power (awake ones only: Übel's sleepers don't count)
@@ -583,6 +586,7 @@ function render(){
  {const f=fmt(S.b);$("count").textContent=f;$("numHelp").hidden=S.b<1000;}$("rate").textContent=fmt(rate());$("per").textContent=fmt(perClick())+(clickMult()>1.001?` (×${clickMult()<10?clickMult().toFixed(2).replace(/\.?0+$/,""):fmt(clickMult())})`:"");
  UPG.forEach(u=>{const b=$("u-"+u.id),c=cost(u),lk=locked(u);b.disabled=S.b<c||lk;
   if(b._lk!==lk){b._lk=lk;b.classList.toggle("locked",lk);const ds=b.querySelector(".idesc");if(lk){ds.textContent=u.lockText||`🔒 Needs ${nameOf(u.req)} first`;b.setAttribute("aria-label",u.req?`${u.name}, locked until you have ${nameOf(u.req)}`:`${u.name}, locked. Max out every factory first`)}else{ds.textContent=u.desc;b.removeAttribute("aria-label")}}
+  if(u.ng){const ds=b.querySelector(".idesc"),off=Math.round((1-beaDisc())*100),tag=off?` 📜 Pierce has cut her price by ${off}%${beaDisc()<=BD_FLOOR?" (max)":""}.`:"",base=lk?u.lockText:u.desc;if(ds._t!==base+tag){ds._t=base+tag;ds.textContent=base+tag}}
   if(u.fac!=null){const n=own(u.id),st=stageOf(n);if(b._shown!==st){b._shown=st;b.querySelector(".fimg").style.backgroundImage=`url(${FAC[u.fac+"_"+st]})`}
    b.classList.toggle("empty",!n);const nx=STAGES.find(v=>v>n);b.querySelector(".fstage").textContent=lk?"":n?`Stage ${st+1}/5`+(nx?` · grows at ${nx}`:" · max!"):"Not built yet"}b.querySelector(".own").textContent=own(u.id);b.querySelector(".c").textContent=fmt(c)+" 🍫"});
  if(S.goal<GOALS.length){const g=GOALS[S.goal],prev=S.goal?GOALS[S.goal-1][0]:0;$("goalName").textContent="Next: "+g[1];$("goalNum").textContent=fmt(S.total)+" / "+fmt(g[0]);$("goalBar").style.width=Math.min(100,(S.total-prev)/(g[0]-prev)*100)+"%"}
@@ -778,10 +782,12 @@ function autoClick(c){const n=perClick()*Math.pow(10,c.tier);gain(n);hop(c);
  sfx("tick")}
 function hitPad(c){if(c.hit)return;const h=document.createElement("span");h.className="hit";c.el.appendChild(h);c.hit=h;h.addEventListener("click",e=>{e.stopPropagation();if(c.ubel)freeUbel(c);else if(c.found)claimFind(c)})}
 function startFind(c){c.found=true;hitPad(c);c.state="found";c.until=Date.now()+7000;c.st0=Date.now();
- const a=document.createElement("span");a.className="ask";a.innerHTML=`<img src="${RAINIMG[Math.floor(Math.random()*RAINIMG.length)].src}" alt=""><b>!</b>`;c.el.appendChild(a);c.ask=a;
+ const a=document.createElement("span");a.className="ask";a.innerHTML=c.cid==="f5"&&beaDisc()>BD_FLOOR?`<span class="scroll" aria-hidden="true">📜</span><b>!</b>`:`<img src="${RAINIMG[Math.floor(Math.random()*RAINIMG.length)].src}" alt=""><b>!</b>`;c.el.appendChild(a);c.ask=a;
  c.im.alt=`${c.ch.name} found brownies! Tap to collect`;sfx("appear");hop(c,22,380)}
 function endFind(c){c.found=false;c.ask&&c.ask.remove();c.ask=null;c.im.alt=c.ch.tip}
 function claimFind(c){if(c.cid==="bea"){endFind(c);brownieStorm(c);return}
+ if(c.cid==="f5"&&beaDisc()>BD_FLOOR){S.bd=Math.max(BD_FLOOR,beaDisc()*BD_STEP);const off=Math.round((1-beaDisc())*100);
+  toast(beaDisc()<=BD_FLOOR?`📜 Pierce found Beatrice's last secret! Her price is as low as it goes (−${off}%).`:`📜 Pierce found a clue about Beatrice! Her price is now −${off}%.`);sfx("twinkle");save()}
 const lv=c.lvl,base=Math.max(20,rate()*(2+Math.random()*7),perClick()*(10+Math.random()*30));
  const n=Math.ceil(base*(1+.4*(lv-1))*Math.pow(3,c.tier)*(.7+Math.random()*.8)*bonusMult());endFind(c);gain(n);render();
  act(c,"excited",1300);lucPop(c,n);sfx("coins");if(Math.random()<.5)emote(Math.random()<.5?"yay":"wink");
@@ -791,7 +797,7 @@ function friendTick(c,t){if(c.cursed)return;
  if(c.found){if(t>c.until){endFind(c);act(c,"sad",1200)}else if(!c.hop&&Math.random()<.04)hop(c,10+Math.random()*16,240+Math.random()*200);return}
  if(busy(c))return;
  if(t>c.nextClick){autoClick(c);const iv=9000/(1+.55*(c.lvl-1))/(1+.3*c.tier);c.nextClick=t+iv*(.55+Math.random()*.9)}
- if(t>c.nextFind){c.nextFind=t+25000+Math.random()*40000;if(crew.filter(o=>o.found).length<2&&!hitsPan(c.x,c.y))startFind(c)}
+ if(t>c.nextFind){c.nextFind=t+(25000+Math.random()*40000)*(c.cid==="f5"?.55:1);if(crew.filter(o=>o.found).length<2&&!hitsPan(c.x,c.y))startFind(c)}
  if(!c.hop&&Math.random()<.0025)hop(c)}
 
 // ---- Beatrice: Brownie Storm ----
