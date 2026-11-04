@@ -148,6 +148,8 @@ h1 b{font-weight:400;color:var(--pink)}
 .luc.yeet img{animation:yeet 1.25s cubic-bezier(.2,.7,.5,1) forwards!important}
 @keyframes yeet{0%{transform:translateX(-50%) rotate(0)}100%{transform:translate(calc(-50% + var(--yx)),-130vh) rotate(1440deg)}}
 .luc.yeet .zz,.luc.yeet .ask{display:none}
+.ubel.cameo{pointer-events:none}
+.ubel .say{position:absolute;left:0;bottom:128px;transform:translateX(-50%);width:max-content;max-width:200px;background:#1d1426;color:#e9dcff;border:2px solid #7a4fb0;border-radius:14px;padding:6px 10px;font-size:13px;font-weight:700;text-align:center;box-shadow:0 3px 0 #000}
 .ubel.dashing img{filter:blur(1.5px) drop-shadow(-30px 0 6px rgba(60,10,90,.5)) drop-shadow(-60px 0 10px rgba(60,10,90,.3))}
 .luc.cursed:not(.ubelized) img{filter:grayscale(.6) brightness(.75) drop-shadow(0 0 6px rgba(40,0,60,.8))}
 .luc .zz{position:absolute;left:0;transform:translateX(-50%);font-family:var(--display);color:#5b2a86;font-size:15px;white-space:nowrap;pointer-events:none;animation:zz 1.6s ease-in-out infinite}
@@ -737,6 +739,25 @@ function curse(c){if(c.yeeted)return;emote(Math.random()<.5?"angry":"teary");c.c
  const z=document.createElement("span");z.className="zz";z.textContent="z z z";c.el.appendChild(z);c.zz=z;
  if(!UB.toldOnce){UB.toldOnce=1;toast(`💤 Übel put ${c.ch.name} to sleep! Tap Übel to wake everyone.`)}else $("quip").textContent=`"Hey! ${c.ch.name} fell asleep!"`;sfx("lullaby");render()}
 // easter egg: Übel sprints over and throws Esme clean off the screen. She comes back when Übel is tapped.
+// secret: poke the same Esme 5 times in a row (no other clicks) and Übel shows up just to toss her. No rewards, just a bit.
+const POKE={c:null,n:0,busy:false};
+document.addEventListener("click",e=>{const im=e.target.closest&&e.target.closest(".luc img");if(!im||!POKE.c||POKE.c.im!==im)POKE.n=0},true);
+function esmePoke(c){if(POKE.busy||c.cursed)return;if(POKE.c!==c){POKE.c=c;POKE.n=0}POKE.n++;hop(c,6+POKE.n*4,260);tone&&AC&&!MUTE&&tone(520+POKE.n*90,.08,{type:"triangle",vol:.08});ac();
+ if(POKE.n>=5){POKE.n=0;cameoUbel(c)}}
+const CAMEO_LINES=["You're getting distracted.~","We don't need this.~"];
+function cameoUbel(target){POKE.busy=true;const fromL=target.x>innerWidth/2?false:true,el=document.createElement("div");el.className="ubel cameo";const im=document.createElement("img");im.alt="Übel";el.appendChild(im);document.body.appendChild(el);
+ const u={el,im,x:fromL?-60:innerWidth+60,y:target.y,ph:"dash",f:0,ft:0,t0:0,last:0,dir:fromL?1:-1};sfx("dash");el.classList.add("dashing");
+ function step(now){const dt=Math.min(.05,(now-(u.last||now))/1000);u.last=now;let k,flip;
+  if(u.ph==="dash"){const dx=target.x-u.x,dy=target.y-u.y,d=Math.hypot(dx,dy),s=Math.min(d,2900*dt);u.x+=dx/Math.max(d,1)*s;u.y+=dy/Math.max(d,1)*s;u.dir=dx>=0?1:-1;u.ft+=dt;if(u.ft>.05){u.ft=0;u.f++}k=UBW[u.f%UBW.length];flip=u.dir<0;
+   if(d<40){u.ph="say";u.t0=now;el.classList.remove("dashing");tossEsme(target,u.dir);const s2=document.createElement("span");s2.className="say";s2.textContent=CAMEO_LINES[Math.floor(Math.random()*CAMEO_LINES.length)];el.appendChild(s2)}}
+  else if(u.ph==="say"){k=UBLOOK[Math.min(UBLOOK.length-1,Math.floor((now-u.t0)/170))];flip=false;if(now-u.t0>2600){u.ph="leave";u.dir=u.x>innerWidth/2?1:-1;el.querySelector(".say")?.remove()}}
+  else{u.x+=u.dir*70*dt;u.ft+=dt;if(u.ft>.11){u.ft=0;u.f++}k=UBW[u.f%UBW.length];flip=u.dir<0;if(u.x<-80||u.x>innerWidth+80){el.remove();POKE.busy=false;return}}
+  if(im._k!==k){im.src=UBS[k];im._k=k}im.classList.toggle("flip",!!flip);el.style.transform=`translate(${u.x}px,${u.y}px)`;requestAnimationFrame(step)}
+ requestAnimationFrame(step)}
+function tossEsme(c,dir){if(c.found)endFind(c);c.cursed=true;c.yeeted=true;c.chase=null;c.box=0;c.hop=null;c.state="yeet";c.until=1e15;
+ c.el.style.setProperty("--yx",(dir>=0?1:-1)*(innerWidth*.9)+"px");c.el.classList.add("yeet");sfx("yeet");emote("shock",true);$("quip").textContent="\"Übel?! Where did you even come from?!\"";render();
+ setTimeout(()=>{c.el.style.visibility="hidden"},1300);
+ setTimeout(()=>{if(!crew.includes(c)||!c.yeeted)return;c.yeeted=false;c.cursed=false;c.el.classList.remove("yeet");c.el.style.visibility="";const L=Math.random()<.5;c.x=L?-50:innerWidth+50;c.y=innerHeight*(.4+Math.random()*.5);target(c);render();$("quip").textContent="\"Esme's back. Maybe stop poking her.\""},3400)}
 function yeetFriend(c,dir){if(c.found)endFind(c);c.cursed=true;c.yeeted=true;c.chase=null;c.box=0;c.hop=null;c.state="yeet";c.until=1e15;
  c.el.style.setProperty("--yx",(dir>=0?1:-1)*(innerWidth*.9)+"px");c.el.classList.add("yeet");sfx("yeet");quake(500,7);emote("shock",true);
  toast(`😱 Übel just threw ${c.ch.name} off the screen! Tap Übel to bring her back.`);$("quip").textContent=`"ESME?! Übel, put her BACK!"`;render();
@@ -786,7 +807,7 @@ function addFriend(id,entrance,tier=0,at){
  if(entrance){c.x=-60;c.y=innerHeight*.7}
  if(at){c.x=at[0];c.y=at[1]}
  target(c);crew.push(c);
- im.addEventListener("click",e=>{e.stopPropagation();if(c.ubel){freeUbel(c);return}if(!c.found)return;claimFind(c)});
+ im.addEventListener("click",e=>{e.stopPropagation();if(c.ubel){freeUbel(c);return}if(!c.found){if(c.cid==="f4")esmePoke(c);return}POKE.n=0;claimFind(c)});
  draw1(c);return c;
 }
 let _pr=null,_prT=0;function panRect(){const n=performance.now();if(n-_prT>250){_prT=n;const r=$("brownieBtn").getBoundingClientRect();_pr={left:r.left-14,right:r.right+14,top:r.top-14,bottom:r.bottom+14}}return _pr}
@@ -892,7 +913,7 @@ function draw1(c){let k,flip=false,lift=0,dxo=0,rot=0;const ch=c.ch,dx=c.tx-c.x,
  lift+=hopLift(c);c.el.style.transform=`translate(${c.x+dxo}px,${c.y-lift}px)`;if(c.ask)c.ask.style.bottom=(d[1]*sc+(c.badge?26:8))+"px";if(c.say)c.say.style.bottom=(d[1]*sc+10)+"px";
  // don't block the brownie pan: let clicks pass through while over it
  const pr=panRect(),hw=d[0]*sc/2,h=d[1]*sc,over=pr&&c.x+hw>pr.left&&c.x-hw<pr.right&&c.y>pr.top&&c.y-h<pr.bottom;
- c.im.style.pointerEvents=(c.found||c.ubel)&&!over?"auto":"none";if(c.ubel)hitPad(c);if(c.hit){const on=(c.found||c.ubel)&&!over;c.hit.style.display=on?"block":"none";c.hit.style.width=(d[0]*sc+36)+"px";c.hit.style.height=(d[1]*sc+(c.ask?62:30))+"px"}c.el.classList.toggle("ubelized",!!c.ubel);c.el.classList.toggle("finding",!!c.found);c.el.classList.toggle("cursed",!!c.cursed);if(c.zz)c.zz.style.bottom=(d[1]*sc+4)+"px";c.im.style.opacity=over?.55:1;c.el.style.zIndex=Math.round(c.y)}
+ c.im.style.pointerEvents=(c.found||c.ubel||(c.cid==="f4"&&!c.cursed&&!c.merging))&&!over?"auto":"none";if(c.ubel)hitPad(c);if(c.hit){const on=(c.found||c.ubel)&&!over;c.hit.style.display=on?"block":"none";c.hit.style.width=(d[0]*sc+36)+"px";c.hit.style.height=(d[1]*sc+(c.ask?62:30))+"px"}c.el.classList.toggle("ubelized",!!c.ubel);c.el.classList.toggle("finding",!!c.found);c.el.classList.toggle("cursed",!!c.cursed);if(c.zz)c.zz.style.bottom=(d[1]*sc+4)+"px";c.im.style.opacity=over?.55:1;c.el.style.zIndex=Math.round(c.y)}
 let wl=performance.now();
 function walk(now){const dt=Math.min(.05,(now-wl)/1000);wl=now;const t=Date.now();
  crew.forEach((c,i)=>{
