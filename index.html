@@ -145,6 +145,10 @@ h1 b{font-weight:400;color:var(--pink)}
 .luc .hit{position:absolute;left:0;bottom:-8px;transform:translateX(-50%);display:none;cursor:pointer;border-radius:16px;pointer-events:auto}
 .luc.ubelized img{filter:drop-shadow(0 0 3px #000) drop-shadow(0 0 10px rgba(60,10,90,.85));cursor:pointer}
 .merge-poof.dark{background:radial-gradient(circle,#2a1036 0 22%,rgba(60,20,90,.8) 40%,rgba(0,0,0,.4) 60%,transparent 70%)}
+.luc.yeet img{animation:yeet 1.25s cubic-bezier(.2,.7,.5,1) forwards!important}
+@keyframes yeet{0%{transform:translateX(-50%) rotate(0)}100%{transform:translate(calc(-50% + var(--yx)),-130vh) rotate(1440deg)}}
+.luc.yeet .zz,.luc.yeet .ask{display:none}
+.ubel.dashing img{filter:blur(1.5px) drop-shadow(-30px 0 6px rgba(60,10,90,.5)) drop-shadow(-60px 0 10px rgba(60,10,90,.3))}
 .luc.cursed:not(.ubelized) img{filter:grayscale(.6) brightness(.75) drop-shadow(0 0 6px rgba(40,0,60,.8))}
 .luc .zz{position:absolute;left:0;transform:translateX(-50%);font-family:var(--display);color:#5b2a86;font-size:15px;white-space:nowrap;pointer-events:none;animation:zz 1.6s ease-in-out infinite}
 @keyframes zz{50%{transform:translate(-40%,-6px);opacity:.6}}
@@ -438,6 +442,8 @@ function sfx(k){if(MUTE||!ac())return;const a=AC;
   case"lullaby":{if(a.currentTime-(sfx._ll||0)<1.2)return;sfx._ll=a.currentTime;const p=[1,1.122,.891,1.189,.944,1.26][Math.floor(Math.random()*6)]*pr(.025);[[659,0,.22],[659,.26,.22],[784,.52,.7]].forEach(([f,at,du])=>{tone(f*p,du,{type:"sine",vol:.12,at,att:.03});tone(f*2*p,du*.8,{type:"sine",vol:.025,at,att:.03})});break}
   case"storm":noise(2.2,{vol:.3,freq:180,q:.6});tone(55,1.8,{type:"sawtooth",vol:.06,to:35});for(let i=0;i<10;i++)tone(1400+Math.random()*1400,.18,{vol:.05,at:.4+i*.09});[523,659,784,1047,1319].forEach((f,i)=>tone(f,.4,{type:"triangle",vol:.08,at:1.2+i*.08}));break;
   case"boom":noise(1.6,{vol:.5,freq:260,q:.5});tone(90,1.4,{type:"sine",vol:.35,to:28});tone(180,.6,{type:"square",vol:.06,to:40,at:.05});break;
+  case"dash":tone(300,.35,{type:"sawtooth",vol:.06,to:1800});noise(.35,{vol:.15,freq:3000});break;
+  case"yeet":tone(900,.7,{type:"triangle",vol:.12,to:120});tone(1400,.5,{type:"sine",vol:.06,to:2400,at:.05});noise(.4,{vol:.2,freq:1500});break;
   case"fart":{const t0=a.currentTime,dur=.75,o=a.createOscillator(),g=a.createGain(),lfo=a.createOscillator(),lg=a.createGain(),f=a.createBiquadFilter();
    o.type="sawtooth";o.frequency.setValueAtTime(110,t0);o.frequency.exponentialRampToValueAtTime(55,t0+dur);
    lfo.type="square";lfo.frequency.setValueAtTime(28,t0);lfo.frequency.linearRampToValueAtTime(14,t0+dur);lg.gain.value=30;lfo.connect(lg).connect(o.frequency);
@@ -713,7 +719,7 @@ Object.values(UBS).forEach(s=>{const i=new Image();i.src=s});
 let UB=null;const UBAURA=120;
 function spawnUbel(){if(UB||!S.total)return;const dir=Math.random()<.5?1:-1,el=document.createElement("button");el.className="ubel";el.setAttribute("aria-label","A mysterious girl. Tap her?");
  const au=document.createElement("span");au.className="aura";el.appendChild(au);const im=document.createElement("img");im.alt="";el.appendChild(im);document.body.appendChild(el);
- UB={el,im,dir,x:dir>0?-60:innerWidth+60,y:innerHeight*(.55+Math.random()*.35),tx:0,ty:0,state:"walk",f:0,ft:0,pause:performance.now()+3000+Math.random()*5000,t0:0,bob:0};
+ UB={el,im,dir,x:dir>0?-60:innerWidth+60,y:innerHeight*(.55+Math.random()*.35),tx:0,ty:0,state:"walk",f:0,ft:0,pause:performance.now()+3000+Math.random()*5000,t0:0,bob:0,yeet:Math.random()<.2};
  el.onclick=e=>{e.stopPropagation();if(UB&&UB.state!=="vanish"&&UB.state!=="look")catchUbel()};requestAnimationFrame(ubLoop);setTimeout(()=>emote("blush"),900)}
 // Übel hunts Esmes first (nearest awake one), then wanders aimlessly. Lumes are her friends.
 // priority: [chance she bothers each decision, chase speed]. Esme is always chased.
@@ -727,10 +733,17 @@ function ubPrey(u,now){const es=nearestAwake(u,"f4");if(es){u.mode="chase";u.pre
   u.prey=null;u.mode=r<ch+(1-ch)*.6?"wander":"idle";if(u.mode==="wander")ubTarget(u)}
  return null}
 function ubTarget(u){u.tx=60+Math.random()*(innerWidth-120);u.ty=innerHeight*(.32+Math.random()*.6);u.dir=u.tx>u.x?1:-1}
-function curse(c){emote(Math.random()<.5?"angry":"teary");c.cursed=true;if(c.found)endFind(c);c.chase=null;c.box=0;c.state="sleep";c.until=1e15;c.hop=null;
+function curse(c){if(c.yeeted)return;emote(Math.random()<.5?"angry":"teary");c.cursed=true;if(c.found)endFind(c);c.chase=null;c.box=0;c.state="sleep";c.until=1e15;c.hop=null;
  const z=document.createElement("span");z.className="zz";z.textContent="z z z";c.el.appendChild(z);c.zz=z;
  if(!UB.toldOnce){UB.toldOnce=1;toast(`💤 Übel put ${c.ch.name} to sleep! Tap Übel to wake everyone.`)}else $("quip").textContent=`"Hey! ${c.ch.name} fell asleep!"`;sfx("lullaby");render()}
-function wakeAll(){crew.forEach(c=>{if(c.cursed&&!c.ubel){c.cursed=false;c.zz&&c.zz.remove();c.zz=null;c.until=0;setTimeout(()=>{if(crew.includes(c))act(c,"excited",1300)},200+Math.random()*700)}})}
+// easter egg: Übel sprints over and throws Esme clean off the screen. She comes back when Übel is tapped.
+function yeetFriend(c,dir){if(c.found)endFind(c);c.cursed=true;c.yeeted=true;c.chase=null;c.box=0;c.hop=null;c.state="yeet";c.until=1e15;
+ c.el.style.setProperty("--yx",(dir>=0?1:-1)*(innerWidth*.9)+"px");c.el.classList.add("yeet");sfx("yeet");quake(500,7);emote("shock",true);
+ toast(`😱 Übel just threw ${c.ch.name} off the screen! Tap Übel to bring her back.`);$("quip").textContent=`"ESME?! Übel, put her BACK!"`;render();
+ setTimeout(()=>{if(c.yeeted)c.el.style.visibility="hidden"},1300)}
+function wakeAll(){crew.forEach(c=>{if(c.yeeted){c.yeeted=false;c.cursed=false;c.el.classList.remove("yeet");c.el.style.visibility="";const L=Math.random()<.5;c.x=L?-50:innerWidth+50;c.y=innerHeight*(.4+Math.random()*.5);target(c);
+   setTimeout(()=>{if(crew.includes(c)&&!c.cursed)$("quip").textContent="\"Esme's back! ...and a little dizzy.\""},1500);return}
+  if(c.cursed&&!c.ubel){c.cursed=false;c.zz&&c.zz.remove();c.zz=null;c.until=0;setTimeout(()=>{if(crew.includes(c))act(c,"excited",1300)},200+Math.random()*700)}})}
 const UDIM={};Object.entries(UBS).forEach(([k,s])=>{const i=new Image();i.onload=()=>UDIM[k]=[i.naturalWidth,i.naturalHeight];i.src=s});
 function ubelSwarm(){const v=crew.filter(c=>!c.merging&&!c.ubel&&c.cid!=="bea");if(!v.length)return;emote("shock",true);sfx("swarm");toast("🖤 Uh oh... everyone turned into Übel! Tap them to change them back.");$("quip").textContent="\"Why is everyone... Übel?!\"";
  v.forEach((c,i)=>setTimeout(()=>{if(!crew.includes(c)||c.merging)return;if(c.found)endFind(c);c.zz&&c.zz.remove();c.zz=null;c.ubel=true;c.cursed=true;c.chase=null;c.box=0;c.hop=null;c.uf=0;
@@ -744,10 +757,13 @@ function ubLoop(now){if(!UB)return;const u=UB,dt=Math.min(.05,(now-(u.last||now)
  if(u.state==="walk"){u.x+=u.dir*42*dt;flip=u.dir<0;u.ft+=dt;u.bob+=dt*10;lift=Math.abs(Math.sin(u.bob))*3;if(u.ft>.13){u.ft=0;u.f++}k=UBW[u.f%UBW.length];
   const prey=ubPrey(u,now);if(prey){u.tx=prey.x;u.ty=prey.y;if(u.hunting!==prey.cid){u.hunting=prey.cid;$("quip").textContent=prey.cid==="f4"?`"Übel's after Esme! Run, Esme!"`:`"Uh oh, Übel's eyeing ${prey.ch.name}..."`}}
   else{if(u.hunting){u.hunting=0;ubTarget(u)}if(!u.tx)ubTarget(u);if(u.mode==="idle"&&u.state==="walk"){u.mode="wander";u.state="idle";u.t0=now;u.pause=now+1800+Math.random()*1800}}
-  const spd=prey?UBPRI[prey.cid][1]:42;u.x-=u.dir*42*dt;const dx=u.tx-u.x,dy=u.ty-u.y,d=Math.hypot(dx,dy);u.x+=dx/Math.max(d,1)*spd*dt;u.y+=dy/Math.max(d,1)*spd*dt;u.dir=dx>=0?1:-1;
+  const dash=u.yeet&&prey&&prey.cid==="f4";if(dash&&!u.dashing){u.dashing=1;sfx("dash");$("quip").textContent="\"Wait... why is Übel running like THAT?!\""}
+  const spd=prey?UBPRI[prey.cid][1]*(dash?50:1):42;u.x-=u.dir*42*dt;const dx=u.tx-u.x,dy=u.ty-u.y,d=Math.hypot(dx,dy),st=Math.min(d,spd*dt);u.x+=dx/Math.max(d,1)*st;u.y+=dy/Math.max(d,1)*st;u.dir=dx>=0?1:-1;
+  u.el.classList.toggle("dashing",!!dash);
+  if(dash&&Math.hypot(prey.x-u.x,(prey.y-u.y)*1.6)<UBAURA){u.yeet=false;u.dashing=0;u.el.classList.remove("dashing");yeetFriend(prey,u.dir)}
   if(!prey&&(d<4||now>u.pause)){u.state="idle";u.t0=now;u.pause=now+2000+Math.random()*2500;if(d<4)ubTarget(u)}
   if(prey&&now>u.pause){u.pause=now+6000+Math.random()*4000}
-  crew.forEach(c=>{if(!c.cursed&&!c.merging&&c.cid!=="f2"&&c.cid!=="bea"&&Math.hypot(c.x-u.x,(c.y-u.y)*1.6)<UBAURA)curse(c)})}
+  if(!dash)crew.forEach(c=>{if(!c.cursed&&!c.merging&&c.cid!=="f2"&&c.cid!=="bea"&&Math.hypot(c.x-u.x,(c.y-u.y)*1.6)<UBAURA)curse(c)})}
  else if(u.state==="idle"){k=UBI[Math.floor((now-u.t0)/220)%UBI.length];if(now>u.pause||nearestAwake(u,"f4")){u.state="walk";u.pause=now+4000+Math.random()*5000}}
  else if(u.state==="look"){const i=Math.floor((now-u.t0)/170);k=UBLOOK[Math.min(i,UBLOOK.length-1)];flip=false;if(i>=UBLOOK.length+5){u.state="vanish";u.t0=now;sfx("smoke")}}
  else if(u.state==="vanish"){const i=Math.floor((now-u.t0)/120);if(i>=UBSMOKE.length){u.el.remove();UB=null;return}k=UBSMOKE[i];flip=false}
@@ -894,7 +910,7 @@ function walk(now){const dt=Math.min(.05,(now-wl)/1000);wl=now;const t=Date.now(
    else{c.x+=dx/d*sp*dt;c.y+=dy/d*sp*dt;c.bob+=dt*(c.box?16:11);c.ft+=dt;if(c.ft>(c.box?.1:.16)){c.ft=0;c.f++}}}
   else if(c.merging){}
   else if(c.state==="pointBox"&&(!c.chase||c.chase.dead)){target(c)}
-  else if(c.state==="spot"||c.state==="found"){}
+  else if(c.state==="spot"||c.state==="found"||c.state==="yeet"){}
   else if(c.state!=="walk"&&c.state!=="pointBox"&&t>c.until){target(c)}
   if(RM&&c.state==="walk"){if(c.chase&&!c.chase.dead){c.x=c.tx;c.y=c.ty;c.state="pointBox"}else{c.state="rest";c.until=t+1e9}}
   draw1(c)});
