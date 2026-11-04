@@ -488,7 +488,7 @@ function rUI(){const list=rList(),tr=list[(R.i+list.length)%list.length];
  $("rPlay").textContent=R.playing?"⏸":"▶";$("rMode").textContent=MODES[R.mode];
  const nm=R.on?`♪ ${String(R.i+1).padStart(2,"0")}. ${tr.name.toUpperCase()}`:"RADIO OFF";$("trackName").textContent=nm;
  $("trackName").parentElement.classList.toggle("scroll",R.on&&nm.length>22);
- $("trackMeta").textContent=R.on?`${tr.kind==="chip"?"GIGI FM ORIGINAL":"YOUR SONG"} · ${R.i+1}/${list.length} · ${R.playing?"ON AIR":"PAUSED"}`:"PRESS ⏻ TO TUNE IN"}
+ $("trackMeta").textContent=R.on?`${tr.kind==="chip"?"GIGI FM ORIGINAL":tr.kind==="lib"?"GIGI FM LIBRARY":"YOUR SONG"} · ${R.i+1}/${list.length} · ${R.playing?"ON AIR":"PAUSED"}`:"PRESS ⏻ TO TUNE IN"}
 setInterval(()=>{document.querySelectorAll("#eq i").forEach(b=>{b.style.height=(R.on&&R.playing&&!RM?4+Math.random()*18:4)+"px"})},120);
 $("rPower").onclick=()=>{R.on=!R.on;if(R.on)rStart();else{rStop();rUI()}};
 $("rPlay").onclick=()=>{if(!R.on){R.on=true;rStart();return}if(R.playing){rStop();rUI()}else rStart()};
@@ -499,6 +499,13 @@ $("rVol").oninput=()=>{if(R.gain)R.gain.gain.value=($("rVol").value/100)*.5};
 $("rFiles").onchange=e=>{const fs=[...e.target.files];if(!fs.length)return;const first=rList().length;
  fs.forEach(f=>R.user.push({kind:"file",name:f.name.replace(/^[0-9a-f]{8}-/,"").replace(/\.[^.]+$/,"").replace(/[_]+/g," ").slice(0,60),url:URL.createObjectURL(f)}));
  toast(`📻 Added ${fs.length} song${fs.length>1?"s":""} to Gigi FM`);R.on=true;R.i=first;rStart();e.target.value=""};
+// songs dropped into the repo's music/ folder load automatically on GitHub Pages
+const cleanName=n=>n.replace(/^[0-9a-f]{8}-/,"").replace(/\.[^.]+$/,"").replace(/[_]+/g," ").slice(0,60);
+async function loadMusicFolder(){try{let files=[];const m=location.hostname.match(/^([^.]+)\.github\.io$/),repo=location.pathname.split("/")[1];
+ if(m&&repo){const r=await fetch(`https://api.github.com/repos/${m[1]}/${repo}/contents/music`);if(r.ok)files=(await r.json()).filter(f=>f.type==="file"&&/\.(mp3|ogg|wav|m4a|aac|flac)$/i.test(f.name)).map(f=>f.name)}
+ if(!files.length){const r=await fetch("music/playlist.json");if(r.ok)files=await r.json()}
+ files.sort((a,b)=>a.localeCompare(b));files.forEach(n=>R.user.push({kind:"lib",name:cleanName(n),url:"music/"+encodeURIComponent(n)}));if(files.length)rUI()}catch(e){}}
+loadMusicFolder();
 rUI();
 
 // ---- Gigi animator: crossfaded frames + squash/smear/shake ----
